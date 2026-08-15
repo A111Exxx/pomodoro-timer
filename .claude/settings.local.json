@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx electron-builder *)",
+      "Bash(npx electron *)",
+      "Bash(npm start *)",
+      "Bash(npx svg2ico *)",
+      "Bash(npx --yes @vituum/svg2ico public/icon.svg public/icon.ico --sizes 16,32,48,64,128,256)",
+      "Bash(node *)",
+      "Bash(winget install *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(choco install *)",
+      "Bash(where gh *)"
+    ]
+  }
+}

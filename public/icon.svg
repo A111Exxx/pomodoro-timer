@@ -1,0 +1,22 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background - iOS style rounded square -->
+  <rect width="256" height="256" rx="54" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1"/>
+
+  <!-- Tomato body -->
+  <path d="M128 194C164.418 194 194 164.418 194 128C194 91.5817 164.418 62 128 62C91.5817 62 62 91.5817 62 128C62 164.418 91.5817 194 128 194Z" fill="#FF3B30"/>
+
+  <!-- Tomato highlight -->
+  <path d="M98 102C108.5 88 128 88 128 88C128 88 147.5 88 158 102" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Tomato bottom curve highlight -->
+  <path d="M98 154C106 162 128 162 128 162C128 162 150 162 158 154" stroke="rgba(255,255,255,0.2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Leaf stem -->
+  <path d="M128 62C128 48 140 38 152 36" stroke="#34C759" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+  <!-- Leaf -->
+  <ellipse cx="158" cy="38" rx="16" ry="8" fill="#34C759" transform="rotate(-30 158 38)"/>
+
+  <!-- Progress ring indicator (subtle) -->
+  <circle cx="128" cy="128" r="100" stroke="rgba(255,255,255,0.15)" stroke-width="4" fill="none" stroke-dasharray="628" stroke-dashoffset="157"/>
+</svg>
