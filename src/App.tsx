@@ -68,6 +68,11 @@ export default function App() {
   const intervalRef = useRef<number | null>(null)
   const totalTimeRef = useRef(config.work * 60)
   const audioContextRef = useRef<AudioContext | null>(null)
+  // 先初始化为空函数，避免暂时性死区；稍后在 useEffect 中更新为真实函数
+  const handleTimerCompleteRef = useRef<((mode: Mode) => void) | null>(null)
+  const startTimerRef = useRef<(() => void) | null>(null)
+  const pauseTimerRef = useRef<(() => void) | null>(null)
+  const resetTimerRef = useRef<(() => void) | null>(null)
 
   // 保存配置
   useEffect(() => {
@@ -137,45 +142,60 @@ export default function App() {
         clearInterval(intervalRef.current!)
         intervalRef.current = null
         setIsRunning(false)
-        handleTimerComplete()
+        // 传递当前 mode 给完成处理函数，避免闭包问题
+        handleTimerCompleteRef.current?.(currentModeRef.current)
         return 0
       }
       return prev - 1
     })
   }, [])
 
-  const handleTimerComplete = useCallback(() => {
-    if (mode === 'work') {
-      // 工作完成
-      setCompletedPomodoros((c) => c + 1)
+  const handleTimerComplete = useCallback((completedMode: Mode) => {
+    if (completedMode === 'work') {
+      // 工作完成：增加计数和累计专注时长，并决定下一个模式
+      setCompletedPomodoros((c) => {
+        const newCount = c + 1
+        const nextMode: Mode = newCount >= 4 ? 'longBreak' : 'break'
+
+        playNotificationSound('workEnd')
+        showNotification('番茄钟完成！', '工作时间结束，休息一下吧~')
+
+        // 自动开始休息
+        if (config.autoStartBreaks) {
+          setMode(nextMode)
+          startTimerRef.current?.()
+        } else {
+          setMode(nextMode)
+        }
+
+        return newCount
+      })
       setTotalFocusTime((t) => t + config.work)
-
-      playNotificationSound('workEnd')
-      showNotification('番茄钟完成！', '工作时间结束，休息一下吧~')
-
-      // 自动开始休息
-      if (config.autoStartBreaks) {
-        const nextMode: Mode = completedPomodoros + 1 >= 4 ? 'longBreak' : 'break'
-        setMode(nextMode)
-        startTimer()
-      } else {
-        const nextMode: Mode = completedPomodoros + 1 >= 4 ? 'longBreak' : 'break'
-        setMode(nextMode)
-      }
     } else {
-      // 休息完成
+      // 休息完成：不增加计数，只切换到工作模式
       playNotificationSound('breakEnd')
       showNotification('休息结束', '准备开始下一轮专注吧！')
 
       // 自动开始工作
       if (config.autoStartWork) {
         setMode('work')
-        startTimer()
+        startTimerRef.current?.()
       } else {
         setMode('work')
       }
     }
-  }, [mode, config, completedPomodoros, playNotificationSound, showNotification])
+  }, [config, playNotificationSound, showNotification])
+
+  // 保存当前 mode 供 handleTimerComplete 使用
+  const currentModeRef = useRef(mode)
+  useEffect(() => {
+    currentModeRef.current = mode
+  }, [mode])
+
+  // 更新 handleTimerCompleteRef，解决暂时性死区问题
+  useEffect(() => {
+    handleTimerCompleteRef.current = handleTimerComplete
+  }, [handleTimerComplete])
 
   const startTimer = useCallback(() => {
     if (intervalRef.current) return
@@ -194,17 +214,28 @@ export default function App() {
   }, [])
 
   const resetTimer = useCallback(() => {
-    pauseTimer()
+    pauseTimerRef.current?.()
     const newTime = config[MODE_DURATIONS[mode]] * 60
     setTimeLeft(newTime)
     totalTimeRef.current = newTime
     setProgress(0)
-  }, [config, mode, pauseTimer])
+  }, [config, mode])
+
+  // 更新 refs
+  useEffect(() => {
+    startTimerRef.current = startTimer
+  }, [startTimer])
+  useEffect(() => {
+    pauseTimerRef.current = pauseTimer
+  }, [pauseTimer])
+  useEffect(() => {
+    resetTimerRef.current = resetTimer
+  }, [resetTimer])
 
   // 模式切换时重置计时器
   useEffect(() => {
-    resetTimer()
-  }, [mode, resetTimer])
+    resetTimerRef.current?.()
+  }, [mode])
 
   // 更新进度
   useEffect(() => {
@@ -218,11 +249,11 @@ export default function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !showSettings) {
         e.preventDefault()
-        isRunning ? pauseTimer() : startTimer()
+        isRunning ? pauseTimerRef.current?.() : startTimerRef.current?.()
       }
       if (e.code === 'KeyR' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
-        resetTimer()
+        resetTimerRef.current?.()
       }
       if (e.code === 'Escape') {
         setShowSettings(false)
@@ -232,7 +263,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isRunning, showSettings, startTimer, pauseTimer, resetTimer])
+  }, [isRunning, showSettings])
 
   // 请求通知权限
   useEffect(() => {
