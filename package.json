@@ -2,6 +2,7 @@
   "name": "pomodoro-timer",
   "version": "1.0.0",
   "description": "桌面番茄钟软件",
+  "author": "A111Exxx",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
