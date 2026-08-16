@@ -46,6 +46,8 @@ jobs:
       - name: Build application
         run: npm run electron:build
         env:
+          # Required for electron-builder to avoid auto-publish errors
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Windows code signing (optional - remove if not configured)
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
           # macOS notarization (optional - remove if not configured)
