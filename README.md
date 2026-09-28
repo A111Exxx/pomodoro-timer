@@ -1,104 +1,181 @@
-# Pomodoro Timer - 桌面番茄钟
+# Pomodoro Timer
 
-一个美观、轻量的桌面番茄钟应用，基于 Electron + React + Vite 构建。
+A lightweight, elegant desktop Pomodoro timer built with Electron, React, TypeScript, and Vite. It combines an iOS-inspired frosted-glass interface with practical desktop features such as system-tray access, native notifications, configurable work cycles, and persistent statistics.
 
-## ✨ 功能特性
+## Features
 
-- 🍅 **经典番茄钟** - 25 分钟专注 + 5 分钟短休息
-- ⏱️ **三种模式** - 专注工作 / 短暂休息 / 长时间休息
-- 🔔 **系统通知** - 时间到自动弹出系统原生通知
-- 🔊 **提示音** - 工作/休息结束播放不同音效
-- ⚙️ **自定义时长** - 可调整工作、短休息、长休息时长
-- 🔄 **自动循环** - 可设置工作结束自动开始休息，休息结束自动开始工作
-- 📊 **统计面板** - 记录完成番茄钟数、累计专注时长
-- 💾 **数据持久化** - 配置和统计自动保存到本地
-- 🎯 **系统托盘** - 关闭窗口最小化到托盘，双击托盘图标显示/隐藏
-- ⌨️ **快捷键支持** - 空格键开始/暂停，Ctrl+R 重置，ESC 隐藏窗口
-- 🌙 **现代深色主题** - 护眼配色，流畅动画
+- **Three timer modes** — Focus, short break, and long break
+- **Classic Pomodoro workflow** — Four completed focus sessions automatically lead to a long break
+- **Configurable durations** — Customize focus, short-break, and long-break lengths
+- **Automatic transitions** — Optionally start breaks after focus sessions and focus sessions after breaks
+- **Session statistics** — Track completed Pomodoros and total focus time
+- **Persistent local data** — Settings and statistics are saved in `localStorage` and restored on launch
+- **Native desktop notifications** — Get notified when a focus or break session ends
+- **Completion sounds** — Different audio cues for focus and break completion, with a mute option
+- **System tray integration** — Hide the window to the tray, restore it with a double-click, or quit from the tray menu
+- **Always-on-top window** — Keep the timer visible while working in other applications
+- **Keyboard shortcuts** — Start, pause, reset, or hide the timer without reaching for the mouse
+- **Light and dark appearance** — Uses the operating system's preferred color scheme
+- **Frameless, draggable window** — Compact desktop layout positioned near the top-right of the primary display
 
-## 🚀 快速开始
+## Screenshots
 
-### 开发模式
+_Add screenshots here when available._
+
+## Requirements
+
+- [Node.js](https://nodejs.org/) 18 or later recommended
+- npm
+- A supported Electron desktop platform: Windows, macOS, or Linux
+
+## Getting Started
+
+### 1. Install dependencies
 
 ```bash
-# 安装依赖
 npm install
+```
 
-# 启动开发环境（热重载）
+### 2. Start the development app
+
+This starts the Vite development server and launches Electron with hot reload:
+
+```bash
 npm run electron:dev
 ```
 
-### 生产版本
+To start only the Vite renderer during frontend development:
 
 ```bash
-# 构建前端资源
-npm run build
-
-# 直接运行（无需打包）
-npm start
-# 或双击 run.bat
+npm run dev
 ```
 
-## 📦 打包发布
+### 3. Build and run locally
+
+Build the production renderer bundle:
 
 ```bash
-# 打包为便携版（解决 winCodeSign 缓存问题）
-npm run build:dir
+npm run build
+```
 
-# 打包为 NSIS 安装包（需管理员权限）
+Then launch the built Electron application:
+
+```bash
+npm start
+```
+
+On Windows, `run.bat` can also be used after building the renderer.
+
+## Packaging
+
+The project uses [electron-builder](https://www.electron.build/) to create distributable applications.
+
+### Unpacked directory build
+
+```bash
+npm run build:dir
+```
+
+This creates an unpacked application in the `release/` directory and is useful for local testing or when an installer is not required.
+
+### Installer/distributable build
+
+```bash
 npm run electron:build
 ```
 
-> **注意**：Windows 上 `electron-builder` 可能遇到 winCodeSign 缓存问题，建议使用 `npm run build:dir` 生成便携版，或直接用 `npm start` 运行。
+The configured targets are:
 
-## 🛠️ 技术栈
+- **Windows** — x64 NSIS installer and unpacked directory
+- **macOS** — DMG
+- **Linux** — AppImage
 
-- **Electron 28** - 跨平台桌面应用框架
-- **React 18** - UI 框架
-- **Vite 5** - 极速构建工具
-- **TypeScript** - 类型安全
-- **Lucide React** - 精美图标库
-- **CSS Variables** - 主题系统
+Build artifacts are written to `release/`.
 
-## ⌨️ 快捷键
+> **Windows note:** If `electron-builder` encounters a `winCodeSign` cache or signing-related problem, use `npm run build:dir` for an unpacked build or run the already-built application with `npm start`.
 
-| 快捷键 | 功能 |
-|--------|------|
-| `Space` | 开始/暂停计时 |
-| `Ctrl + R` | 重置计时器 |
-| `ESC` | 隐藏窗口到托盘 |
+## Keyboard Shortcuts
 
-## 📁 项目结构
+| Shortcut | Action |
+| --- | --- |
+| `Space` | Start or pause the timer when Settings is closed |
+| `Ctrl + R` / `Cmd + R` | Reset the current timer |
+| `Escape` | Close Settings and hide the window to the system tray |
 
-```
+## Timer Settings
+
+Open Settings from the gear icon to configure:
+
+- **Focus duration** — 1–120 minutes; default: 25
+- **Short-break duration** — 1–60 minutes; default: 5
+- **Long-break duration** — 1–60 minutes; default: 15
+- **Automatically start breaks** — Start the next break when a focus session ends
+- **Automatically start focus sessions** — Start the next focus session when a break ends
+- **Completion sound** — Enable or disable timer-end audio cues
+
+A mode's duration can be changed safely while that mode is paused. The current paused timer updates to the new duration immediately.
+
+## Data and Privacy
+
+The application stores configuration and statistics locally in the browser `localStorage` used by the Electron renderer. The current keys are:
+
+- `pomodoro-config`
+- `pomodoro-count`
+- `pomodoro-total-focus`
+
+No account or remote database is required for normal use. Desktop notifications are delivered through Electron in the packaged app, with the Web Notification API used as a fallback outside Electron.
+
+## Technology Stack
+
+- [Electron 28](https://www.electronjs.org/) — desktop runtime
+- [React 18](https://react.dev/) — user interface
+- [TypeScript](https://www.typescriptlang.org/) — typed application code
+- [Vite 5](https://vitejs.dev/) — development server and build tool
+- [lucide-react](https://lucide.dev/) — interface icons
+- CSS custom properties — responsive light/dark design system
+- Web Audio API — completion sounds
+
+## Project Structure
+
+```text
 pomodoro-timer/
 ├── electron/
-│   ├── main.cjs      # Electron 主进程
-│   └── preload.cjs   # 预加载脚本
-├── src/
-│   ├── App.tsx       # 主组件
-│   ├── main.tsx      # 入口文件
-│   └── index.css     # 样式文件
+│   ├── main.cjs        # Electron main process, window, tray, and IPC handlers
+│   ├── main.ts         # Main-process TypeScript source
+│   ├── preload.cjs     # Packaged preload entry
+│   └── preload.ts      # Secure context-bridge API
 ├── public/
-│   └── icon.svg      # 应用图标
-├── package.json
-├── vite.config.ts
-└── run.bat           # Windows 启动脚本
+│   ├── icon.ico        # Windows application icon
+│   └── icon.svg        # Source/application icon
+├── src/
+│   ├── App.tsx         # Timer logic, settings, persistence, and UI
+│   ├── index.css       # iOS-inspired design system and themes
+│   └── main.tsx        # React entry point
+├── index.html          # Renderer HTML template
+├── package.json        # Scripts, dependencies, and electron-builder config
+├── vite.config.ts      # Vite configuration
+└── run.bat             # Windows helper script
 ```
 
-## 🎨 自定义配置
+## Architecture Notes
 
-在设置面板（齿轮图标）中可调整：
+- The **main process** creates the frameless, transparent, always-on-top window, manages the tray icon, and handles native notifications and window-control IPC.
+- The **preload bridge** exposes a small, isolated `electronAPI` to the renderer through `contextBridge`.
+- The **renderer** keeps timer state, mode transitions, settings, statistics, and persistence in the main React application component.
+- Electron runs with `contextIsolation` enabled, `nodeIntegration` disabled, and sandboxing enabled in the renderer window.
 
-- **专注时长** (1-120 分钟，默认 25)
-- **短休息时长** (1-60 分钟，默认 5)
-- **长休息时长** (1-60 分钟，默认 15)
-- **工作结束自动开始休息**
-- **休息结束自动开始工作**
-- **启用提示音**
+## Development Commands
 
-数据自动保存在 `localStorage` 中，重启应用保持不变。
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm run electron:dev` | Run Vite and Electron together in development mode |
+| `npm run build` | Build the production renderer bundle into `dist/` |
+| `npm run build:dir` | Build and package an unpacked app into `release/` |
+| `npm run electron:build` | Build distributable installers/images |
+| `npm run preview` | Preview the Vite production build |
+| `npm start` | Launch the Electron app using the built renderer |
 
-## 📄 许可证
+## License
 
-MIT License
+This project is released under the MIT License.
