@@ -20,7 +20,9 @@ A lightweight, elegant desktop Pomodoro timer built with Electron, React, TypeSc
 
 ## Screenshots
 
-_Add screenshots here when available._
+| Focus timer | Settings |
+| --- | --- |
+| <img src="docs/screenshots/focus-timer.png" alt="Pomodoro Timer focus screen with countdown and session statistics" width="350"> | <img src="docs/screenshots/settings.png" alt="Pomodoro Timer settings for durations and automatic start preferences" width="350"> |
 
 ## Requirements
 
