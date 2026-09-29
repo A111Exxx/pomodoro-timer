@@ -1,7 +1,7 @@
 {
   "name": "pomodoro-timer",
   "version": "1.0.0",
-  "description": "桌面番茄钟软件",
+  "description": "Desktop Pomodoro timer",
   "author": "A111Exxx",
   "main": "electron/main.cjs",
   "scripts": {

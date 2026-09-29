@@ -68,7 +68,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: '显示/隐藏',
+      label: 'Show/Hide',
       click: () => {
         if (mainWindow?.isVisible()) {
           mainWindow.hide()
@@ -79,7 +79,7 @@ function createTray() {
     },
     { type: 'separator' },
     {
-      label: '退出',
+      label: 'Quit',
       click: () => {
         isQuitting = true
         app.quit()
@@ -120,7 +120,7 @@ app.on('before-quit', () => {
   isQuitting = true
 })
 
-// IPC 通信
+// IPC handlers
 ipcMain.on('show-notification', (_, title: string, body: string) => {
   new Notification({ title, body }).show()
 })

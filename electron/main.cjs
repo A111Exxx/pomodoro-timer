@@ -1,7 +1,7 @@
 const { app, BrowserWindow, nativeImage, Tray, Menu, Notification, ipcMain, screen } = require('electron')
 const path = require('path')
 
-// 禁用 GPU 缓存警告
+// Disable GPU cache warnings
 app.commandLine.appendSwitch('disable-gpu-cache')
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
 app.commandLine.appendSwitch('disable-software-rasterizer')
@@ -31,9 +31,9 @@ function createWindow() {
     frame: false,
     transparent: true,
     alwaysOnTop: true,
-    skipTaskbar: true,  // 隐藏任务栏图标，仅托盘显示
+    skipTaskbar: true,  // Show only in the tray, not the taskbar
     resizable: false,
-    // Windows 上需要设置背景色透明
+    // Use a transparent background on Windows
     backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -47,20 +47,20 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
   } else {
-    // 生产环境：加载打包后的 dist/index.html
+    // Load the packaged renderer in production
     const indexPath = path.join(__dirname, '../dist/index.html')
     console.log('[Main] Loading index.html from:', indexPath)
     mainWindow.loadFile(indexPath)
   }
 
-  // 确保窗口显示：ready-to-show 事件 + 兜底定时器
+  // Show the window when ready, with a fallback timer.
   mainWindow.once('ready-to-show', () => {
     console.log('[Main] ready-to-show fired, showing window')
     mainWindow?.show()
     console.log('[Main] Window shown, bounds:', mainWindow?.getBounds())
   })
 
-  // 兜底：如果 ready-to-show 没触发（如 dev server 未就绪），3秒后强制显示
+  // Show after three seconds if ready-to-show has not fired.
   setTimeout(() => {
     if (mainWindow && !mainWindow.isVisible()) {
       console.log('[Main] Fallback: showing window after timeout')
@@ -69,10 +69,10 @@ function createWindow() {
     }
   }, 3000)
 
-  // 监听加载失败
+  // Log load failures
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     console.error('[Main] Window failed to load:', errorCode, errorDescription)
-    // 加载失败时也尝试显示窗口（可能显示错误页面）
+    // Show the window even if loading fails.
     if (!mainWindow.isVisible()) {
       mainWindow.show()
     }
@@ -85,19 +85,19 @@ function createWindow() {
     }
   })
 
-  // 移除 blur 事件，防止点击其他窗口时自动隐藏
+  // Keep the window visible when it loses focus.
 }
 
 function getIconPath() {
-  // 优先尝试多个可能的路径
+  // Try each possible icon location.
   const candidates = [
-    // 开发环境：public 文件夹
+    // Development: public folder
     path.join(__dirname, '../public/icon.ico'),
     path.join(__dirname, '../public/icon.svg'),
-    // 生产环境：resources 目录（electron-builder 复制 public 到 resources）
+    // Production: resources directory
     path.join(process.resourcesPath, 'icon.ico'),
     path.join(process.resourcesPath, 'icon.svg'),
-    // 生产环境：asar 内部的 dist 目录（vite 复制 public 到 dist）
+    // Production: dist directory inside the app archive
     path.join(__dirname, '../dist/icon.ico'),
     path.join(__dirname, '../dist/icon.svg'),
   ]
@@ -120,7 +120,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: '显示/隐藏',
+      label: 'Show/Hide',
       click: () => {
         if (mainWindow?.isVisible()) {
           mainWindow.hide()
@@ -131,7 +131,7 @@ function createTray() {
     },
     { type: 'separator' },
     {
-      label: '退出',
+      label: 'Quit',
       click: () => {
         isQuitting = true
         app.quit()
@@ -172,7 +172,7 @@ app.on('before-quit', () => {
   isQuitting = true
 })
 
-// IPC 通信
+// IPC handlers
 ipcMain.on('show-notification', (_, title, body) => {
   new Notification({ title, body }).show()
 })

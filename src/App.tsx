@@ -31,9 +31,9 @@ const DEFAULT_CONFIG: TimerConfig = {
 }
 
 const MODE_LABELS: Record<Mode, string> = {
-  work: '专注工作',
-  break: '短暂休息',
-  longBreak: '长时间休息',
+  work: 'Focus',
+  break: 'Short Break',
+  longBreak: 'Long Break',
 }
 
 const MODE_DURATIONS: Record<Mode, keyof TimerConfig> = {
@@ -68,18 +68,18 @@ export default function App() {
   const intervalRef = useRef<number | null>(null)
   const totalTimeRef = useRef(config.work * 60)
   const audioContextRef = useRef<AudioContext | null>(null)
-  // 先初始化为空函数，避免暂时性死区；稍后在 useEffect 中更新为真实函数
+  // Initialize the callback ref before assigning it in an effect.
   const handleTimerCompleteRef = useRef<((mode: Mode) => void) | null>(null)
   const startTimerRef = useRef<(() => void) | null>(null)
   const pauseTimerRef = useRef<(() => void) | null>(null)
   const resetTimerRef = useRef<(() => void) | null>(null)
 
-  // 保存配置
+  // Save settings
   useEffect(() => {
     localStorage.setItem('pomodoro-config', JSON.stringify(config))
   }, [config])
 
-  // 保存统计
+  // Save statistics
   useEffect(() => {
     localStorage.setItem('pomodoro-count', completedPomodoros.toString())
   }, [completedPomodoros])
@@ -88,7 +88,7 @@ export default function App() {
     localStorage.setItem('pomodoro-total-focus', totalFocusTime.toString())
   }, [totalFocusTime])
 
-  // 初始化音频上下文
+  // Initialize the audio context
   const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -96,7 +96,7 @@ export default function App() {
     return audioContextRef.current
   }, [])
 
-  // 播放提示音
+  // Play the completion sound
   const playNotificationSound = useCallback((type: 'workEnd' | 'breakEnd') => {
     if (!config.sound) return
 
@@ -110,11 +110,11 @@ export default function App() {
     gainNode.connect(ctx.destination)
 
     if (type === 'workEnd') {
-      // 工作结束：双音
+      // Work ended: two tones
       oscillator.frequency.setValueAtTime(880, ctx.currentTime)
       oscillator.frequency.setValueAtTime(660, ctx.currentTime + 0.15)
     } else {
-      // 休息结束：单音
+      // Break ended: one tone
       oscillator.frequency.setValueAtTime(523, ctx.currentTime)
     }
 
@@ -126,7 +126,7 @@ export default function App() {
     oscillator.stop(ctx.currentTime + 0.5)
   }, [config.sound, initAudio])
 
-  // 显示系统通知
+  // Show a system notification
   const showNotification = useCallback((title: string, body: string) => {
     if (window.electronAPI) {
       window.electronAPI.showNotification(title, body)
@@ -135,14 +135,14 @@ export default function App() {
     }
   }, [])
 
-  // 计时器逻辑
+  // Timer tick
   const tick = useCallback(() => {
     setTimeLeft((prev) => {
       if (prev <= 1) {
         clearInterval(intervalRef.current!)
         intervalRef.current = null
         setIsRunning(false)
-        // 传递当前 mode 给完成处理函数，避免闭包问题
+        // Use the current mode to avoid a stale closure.
         handleTimerCompleteRef.current?.(currentModeRef.current)
         return 0
       }
@@ -152,15 +152,15 @@ export default function App() {
 
   const handleTimerComplete = useCallback((completedMode: Mode) => {
     if (completedMode === 'work') {
-      // 工作完成：增加计数和累计专注时长，并决定下一个模式
+      // Record the completed session and select the next mode.
       setCompletedPomodoros((c) => {
         const newCount = c + 1
         const nextMode: Mode = newCount >= 4 ? 'longBreak' : 'break'
 
         playNotificationSound('workEnd')
-        showNotification('番茄钟完成！', '工作时间结束，休息一下吧~')
+        showNotification('Focus session complete!', 'Time for a break.')
 
-        // 自动开始休息
+        // Start the break automatically
         if (config.autoStartBreaks) {
           setMode(nextMode)
           startTimerRef.current?.()
@@ -172,11 +172,11 @@ export default function App() {
       })
       setTotalFocusTime((t) => t + config.work)
     } else {
-      // 休息完成：不增加计数，只切换到工作模式
+      // Return to focus mode without adding a completed session.
       playNotificationSound('breakEnd')
-      showNotification('休息结束', '准备开始下一轮专注吧！')
+      showNotification('Break complete', 'Ready for another focus session?')
 
-      // 自动开始工作
+      // Start focus automatically
       if (config.autoStartWork) {
         setMode('work')
         startTimerRef.current?.()
@@ -186,13 +186,13 @@ export default function App() {
     }
   }, [config, playNotificationSound, showNotification])
 
-  // 保存当前 mode 供 handleTimerComplete 使用
+  // Keep the current mode available to the completion handler.
   const currentModeRef = useRef(mode)
   useEffect(() => {
     currentModeRef.current = mode
   }, [mode])
 
-  // 更新 handleTimerCompleteRef，解决暂时性死区问题
+  // Update the completion callback ref after it is defined.
   useEffect(() => {
     handleTimerCompleteRef.current = handleTimerComplete
   }, [handleTimerComplete])
@@ -221,7 +221,7 @@ export default function App() {
     setProgress(0)
   }, [config, mode])
 
-  // 更新 refs
+  // Update callback refs
   useEffect(() => {
     startTimerRef.current = startTimer
   }, [startTimer])
@@ -232,19 +232,19 @@ export default function App() {
     resetTimerRef.current = resetTimer
   }, [resetTimer])
 
-  // 模式切换时重置计时器
+  // Reset the timer when the mode changes
   useEffect(() => {
     resetTimerRef.current?.()
   }, [mode])
 
-  // 更新进度
+  // Update progress
   useEffect(() => {
     const total = config[MODE_DURATIONS[mode]] * 60
     const pct = ((total - timeLeft) / total) * 100
     setProgress(pct)
   }, [timeLeft, config, mode])
 
-  // 键盘快捷键
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !showSettings) {
@@ -265,14 +265,14 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isRunning, showSettings])
 
-  // 请求通知权限
+  // Request notification permission
   useEffect(() => {
     if (Notification.permission === 'default') {
       Notification.requestPermission()
     }
   }, [])
 
-  // 退出确认处理
+  // Handle quit confirmation
   const handleQuitConfirm = useCallback((confirmed: boolean) => {
     setShowQuitConfirm(false)
     if (confirmed && window.electronAPI) {
@@ -326,20 +326,20 @@ export default function App() {
             <span className="app-title">Pomodoro Timer</span>
           </div>
           <div className="title-bar-right">
-            <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label="设置">
+            <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label="Settings">
               <Settings size={20} />
             </button>
-            <button className="icon-btn" onClick={() => window.electronAPI?.hideWindow()} aria-label="最小化到托盘">
+            <button className="icon-btn" onClick={() => window.electronAPI?.hideWindow()} aria-label="Hide to tray">
               <Minimize size={20} />
             </button>
-            <button className="icon-btn" onClick={() => setShowQuitConfirm(true)} aria-label="关闭程序">
+            <button className="icon-btn" onClick={() => setShowQuitConfirm(true)} aria-label="Quit app">
               <X size={20} />
             </button>
           </div>
         </div>
 
         {/* Mode Segmented Control */}
-        <div className="mode-segmented" role="tablist" aria-label="计时器模式">
+        <div className="mode-segmented" role="tablist" aria-label="Timer modes">
           {MODE_ORDER.map((m) => (
             <button
               key={m}
@@ -383,14 +383,14 @@ export default function App() {
             <button
               className="control-btn secondary"
               onClick={resetTimer}
-              aria-label="重置"
+              aria-label="Reset timer"
             >
               <RotateCcw size={32} />
             </button>
             <button
               className="control-btn primary"
               onClick={isRunning ? pauseTimer : startTimer}
-              aria-label={isRunning ? '暂停' : '开始'}
+              aria-label={isRunning ? 'Pause timer' : 'Start timer'}
               style={{ boxShadow: progressShadow }}
             >
               {isRunning ? <Pause size={36} /> : <Play size={36} />}
@@ -402,11 +402,11 @@ export default function App() {
         <div className="stats">
           <div className="stat-card">
             <div className="stat-value">{completedPomodoros}</div>
-            <div className="stat-label">已完成番茄钟</div>
+            <div className="stat-label">Sessions completed</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{Math.floor(totalFocusTime / 60)}h {totalFocusTime % 60}m</div>
-            <div className="stat-label">累计专注时长</div>
+            <div className="stat-label">Total focus time</div>
           </div>
         </div>
       </div>
@@ -418,16 +418,16 @@ export default function App() {
           <div className="settings-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="settings-grabber" />
             <div className="settings-header">
-              <span className="settings-title">设置</span>
-              <button className="settings-close" onClick={() => setShowSettings(false)} aria-label="关闭设置">
+              <span className="settings-title">Settings</span>
+              <button className="settings-close" onClick={() => setShowSettings(false)} aria-label="Close settings">
                 <X size={20} />
               </button>
             </div>
             <div className="settings-content">
               <div className="settings-section">
-                <div className="settings-section-title">时间设置 (分钟)</div>
+                <div className="settings-section-title">Timer durations (minutes)</div>
                 <div className="setting-row">
-                  <span className="setting-name">专注时长</span>
+                  <span className="setting-name">Focus</span>
                   <div className="time-input-group">
                     <input
                       type="number"
@@ -436,13 +436,13 @@ export default function App() {
                       onChange={(e) => handleConfigChange('work', parseInt(e.target.value) || 1)}
                       min={1}
                       max={120}
-                      aria-label="专注时长（分钟）"
+                      aria-label="Focus duration in minutes"
                     />
-                    <span className="time-unit">分钟</span>
+                    <span className="time-unit">min</span>
                   </div>
                 </div>
                 <div className="setting-row">
-                  <span className="setting-name">短休息</span>
+                  <span className="setting-name">Short Break</span>
                   <div className="time-input-group">
                     <input
                       type="number"
@@ -451,13 +451,13 @@ export default function App() {
                       onChange={(e) => handleConfigChange('break', parseInt(e.target.value) || 1)}
                       min={1}
                       max={60}
-                      aria-label="短休息时长（分钟）"
+                      aria-label="Short break duration in minutes"
                     />
-                    <span className="time-unit">分钟</span>
+                    <span className="time-unit">min</span>
                   </div>
                 </div>
                 <div className="setting-row">
-                  <span className="setting-name">长休息</span>
+                  <span className="setting-name">Long Break</span>
                   <div className="time-input-group">
                     <input
                       type="number"
@@ -466,17 +466,17 @@ export default function App() {
                       onChange={(e) => handleConfigChange('longBreak', parseInt(e.target.value) || 1)}
                       min={1}
                       max={60}
-                      aria-label="长休息时长（分钟）"
+                      aria-label="Long break duration in minutes"
                     />
-                    <span className="time-unit">分钟</span>
+                    <span className="time-unit">min</span>
                   </div>
                 </div>
               </div>
 
               <div className="settings-section">
-                <div className="settings-section-title">行为设置</div>
+                <div className="settings-section-title">Preferences</div>
                 <div className="setting-row">
-                  <span className="setting-name">工作结束自动开始休息</span>
+                  <span className="setting-name">Auto-start breaks</span>
                   <label className="toggle">
                     <input
                       type="checkbox"
@@ -487,7 +487,7 @@ export default function App() {
                   </label>
                 </div>
                 <div className="setting-row">
-                  <span className="setting-name">休息结束自动开始工作</span>
+                  <span className="setting-name">Auto-start focus</span>
                   <label className="toggle">
                     <input
                       type="checkbox"
@@ -498,7 +498,7 @@ export default function App() {
                   </label>
                 </div>
                 <div className="setting-row">
-                  <span className="setting-name">完成提示音</span>
+                  <span className="setting-name">Completion sound</span>
                   <label className="toggle">
                     <input
                       type="checkbox"
@@ -548,7 +548,7 @@ export default function App() {
                   marginBottom: 'var(--space-2)',
                 }}
               >
-                确认退出
+                Quit Pomodoro Timer?
               </div>
               <div style={{
                 width: 64, height: 64, borderRadius: '50%',
@@ -559,10 +559,10 @@ export default function App() {
                 <AlertCircle size={28} color="var(--accent)" />
               </div>
               <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
-                确定要退出番茄钟吗？
+                Are you sure you want to quit?
               </p>
               <p style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', marginBottom: 'var(--space-6)' }}>
-                退出后将停止计时，统计数据会自动保存
+                The timer will stop. Your stats are saved automatically.
               </p>
               <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center' }}>
                 <button
@@ -570,14 +570,14 @@ export default function App() {
                   onClick={() => handleQuitConfirm(false)}
                   style={{ width: 'auto', padding: '0 var(--space-6)', height: 44 }}
                 >
-                  取消
+                  Cancel
                 </button>
                 <button
                   className="control-btn primary"
                   onClick={() => handleQuitConfirm(true)}
                   style={{ width: 'auto', padding: '0 var(--space-6)', height: 44 }}
                 >
-                  退出
+                  Quit
                 </button>
               </div>
             </div>
